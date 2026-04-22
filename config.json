@@ -1,0 +1,78 @@
+{
+  "_setup": [
+    "1. Copy this file to config.json (it is gitignored — credentials stay local).",
+    "2. In QQ Mail: Settings → Account → Enable IMAP/SMTP service → generate 授权码.",
+    "3. Use the 授权码 as the password below — NOT your QQ login password.",
+    "4. Add all desired recipients to the list."
+  ],
+
+  "top_n_turnover": 10,
+
+  "spot_fetch": {
+    "providers":   ["em", "ths"],
+    "max_retries": 8,
+    "timeout":     600
+  },
+
+  "sector_scan": {
+    "stop_coverage": 0.9
+  },
+
+  "cpo_tech_fetch": {
+    "max_workers": 4,
+    "retries": 2,
+    "retry_wait": 0.4
+  },
+
+  "cpo_daily_score": {
+    "style": "aggressive",
+    "top_n": 15,
+    "board_attack_threshold": 70,
+    "stock_entry_threshold": 72
+  },
+
+  "full_factor": {
+    "style": "balanced",
+    "top_n": 15,
+    "board_attack_threshold": 72,
+    "stock_entry_threshold": 76,
+    "manual_overrides": {}
+  },
+
+  "smtp": {
+    "host": "smtp.qq.com",
+    "port": 465,
+    "use_ssl": true,
+    "username": "1003257670@qq.com",
+    "password": "ulklxqjrakwkbdca"
+  },
+
+  "imap": {
+    "host": "imap.qq.com",
+    "port": 993,
+    "sent_folder": "Sent"
+  },
+
+  "sender": "1003257670@qq.com",
+
+  "recipients": [
+    "1003257670@qq.com"
+  ],
+
+  "subject_prefix": "[A股分析]",
+
+  "_other_providers": {
+    "Gmail (App Password required when 2FA on)": {
+      "smtp": {"host": "smtp.gmail.com", "port": 587, "use_ssl": false},
+      "imap": {"host": "imap.gmail.com", "port": 993, "sent_folder": "[Gmail]/Sent Mail"}
+    },
+    "163 Mail (授权码 as password)": {
+      "smtp": {"host": "smtp.163.com", "port": 465, "use_ssl": true},
+      "imap": {"host": "imap.163.com", "port": 993, "sent_folder": "Sent Messages"}
+    },
+    "Outlook / Hotmail": {
+      "smtp": {"host": "smtp-mail.outlook.com", "port": 587, "use_ssl": false},
+      "imap": {"host": "outlook.office365.com", "port": 993, "sent_folder": "Sent"}
+    }
+  }
+}
