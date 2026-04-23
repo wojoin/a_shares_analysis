@@ -62,64 +62,13 @@ try:
 except ImportError:
     HAS_RICH = False
 
+from modules.cache import (
+    CACHE_DIR, CONFIG_PATH,
+    _today, _cache_path, _load_cache, _save_cache, _get_cached, _print_cache_hit,
+    load_config,
+)
+
 MILESTONES = [30, 50, 70, 90]
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Cache
-# ─────────────────────────────────────────────────────────────────────────────
-
-CACHE_DIR = Path(__file__).parent / "cache"
-
-
-def _today() -> str:
-    return date.today().strftime("%Y%m%d")
-
-
-def _cache_path(key: str) -> Path:
-    return CACHE_DIR / f"{key}_{_today()}.pkl"
-
-
-def _load_cache(key: str):
-    p = _cache_path(key)
-    if p.exists():
-        try:
-            with open(p, "rb") as f:
-                return pickle.load(f)
-        except Exception:
-            return None
-    return None
-
-
-def _save_cache(key: str, obj) -> None:
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    # Remove stale files for this key (other dates)
-    for old in CACHE_DIR.glob(f"{key}_????????.pkl"):
-        if old != _cache_path(key):
-            try:
-                old.unlink()
-            except OSError:
-                pass
-    with open(_cache_path(key), "wb") as f:
-        pickle.dump(obj, f)
-
-
-def _get_cached(key: str, force: bool):
-    """Return cached object for today, or None if missing / force=True."""
-    if force:
-        return None
-    obj = _load_cache(key)
-    if obj is not None:
-        _print_cache_hit(key)
-    return obj
-
-
-def _print_cache_hit(key: str):
-    msg = f"  [cache] {key} — using today's cached data ({_today()})"
-    if HAS_RICH:
-        console.print(f"  [dim cyan][cache][/] {key} — using today's cached data ({_today()})")
-    else:
-        print(msg)
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
@@ -2222,24 +2171,10 @@ def export_results(chinext_data: dict, sector_data: dict, cpo_data: dict, path: 
 # Email
 # ─────────────────────────────────────────────────────────────────────────────
 
-CONFIG_PATH = Path(__file__).parent / "config.json"
-
 _TS = "border-collapse:collapse;font-size:13px;margin-bottom:16px;width:100%"
 _H3 = "color:#333;border-bottom:2px solid #aaa;padding-bottom:4px;margin-top:24px"
 _MS_BG  = {30: "#fff9c4", 50: "#e0f7fa", 70: "#f3e5f5", 90: "#ffebee"}
 _MS_CLR = {30: "#f57f17", 50: "#006064", 70: "#4a148c", 90: "#b71c1c"}
-
-
-def load_config() -> dict:
-    """Return parsed config.json, or {} if absent / invalid."""
-    if not CONFIG_PATH.exists():
-        return {}
-    try:
-        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"  [config] Cannot parse config.json: {e}")
-        return {}
 
 
 # ── HTML helpers ─────────────────────────────────────────────────────────────
