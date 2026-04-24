@@ -3,7 +3,7 @@ from __future__ import annotations
 import akshare as ak
 import pandas as pd
 
-from modules.cache import _get_cached, _save_cache, _print_cache_hit
+from modules.cache import _get_cached, _save_cache
 from modules.spot import _PROVIDER_DISPLAY
 
 
