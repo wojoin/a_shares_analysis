@@ -29,8 +29,6 @@ Usage:
 """
 
 import argparse
-import json
-import pickle
 import time
 import warnings
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -63,7 +61,7 @@ from modules.display import (
 from modules.email_builder import build_email_html, send_email
 
 from modules.spot import (
-    fetch_chinext_turnover, _fetch_spot_data,
+    fetch_chinext_turnover,
     _PROVIDER_MAP, _PROVIDER_DISPLAY,
 )
 
