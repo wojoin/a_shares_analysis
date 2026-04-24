@@ -49,7 +49,7 @@ Historical data fetches use `qfq` (前复权 / forward-adjusted) prices.
 3. **CPO / concept board** — fetches named concept board and shows per-stock share of board turnover.
 
 4. **CPO 技术指标评分** (`fetch_cpo_technicals`) — fetches 90-day OHLCV history (qfq) for every constituent of the concept board and computes a full set of technical indicators, then ranks stocks by composite score (0–100):
-   - **Trend (40 pts):** MA5/20/60 alignment + MACD(12/26/9) histogram direction and expansion
+   - **Trend (40 pts):** MA5/20/60 alignment + MACD(10/20/5) histogram direction and expansion
    - **Timing (35 pts):** RSI(14) zone (45–65 optimal; >75 penalty) + Bollinger %B(20,2σ) position (0.4–0.75 optimal)
    - **Capital activity (25 pts):** turnover rate sweet spot (5–10 % optimal; >15 % overheated penalty)
    - Additional indicators displayed (not scored): KDJ(9,3,3), ATR(14)-based dynamic stop-loss, volume ratio vs 20-day average
