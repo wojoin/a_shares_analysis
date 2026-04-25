@@ -77,67 +77,11 @@ _PROVIDER_DISPLAY: dict[str, str] = {
 }
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Candidate selection helpers (needed by display_cpo_daily_score)
-# ─────────────────────────────────────────────────────────────────────────────
-
-def select_cpo_candidates(stock_df: pd.DataFrame, board_regime: str, top_n: int = 15) -> pd.DataFrame:
-    if stock_df is None or stock_df.empty:
-        return pd.DataFrame()
-
-    top_n = max(1, int(top_n))
-    s_df = stock_df[stock_df["stock_tier"] == "S"]
-    a_df = stock_df[stock_df["stock_tier"] == "A"]
-    b_df = stock_df[stock_df["stock_tier"] == "B"]
-
-    if board_regime == "进攻":
-        pick = pd.concat([s_df, a_df], ignore_index=True)
-    elif board_regime == "观察":
-        a_half_n = max(0, int(np.ceil(len(a_df) / 2)))
-        pick = pd.concat([s_df, a_df.head(a_half_n)], ignore_index=True)
-    else:
-        pick = pd.concat([s_df, a_df, b_df], ignore_index=True)
-
-    pick = pick.sort_values("stock_score", ascending=False).drop_duplicates(subset=["code"]).head(top_n)
-    return pick.reset_index(drop=True)
-
 
 def _ff_cfg(cfg: dict | None = None) -> dict:
-    fcfg = (cfg or {}).get("full_factor", {})
-    style = str(fcfg.get("style", "balanced")).strip().lower()
-    if style not in {"aggressive", "balanced", "defensive"}:
-        style = "balanced"
-    weights = {
-        "aggressive": {
-            "board": {"fund": 30, "breadth": 15, "momentum": 25, "valuation": 8, "industry": 12, "event": 10},
-            "stock": {"tech": 28, "capital": 24, "fundamental": 14, "valuation": 8, "industry": 16, "event": 10},
-            "risk_cap": 20,
-            "entry_thr": 74,
-            "attack_thr": 70,
-        },
-        "balanced": {
-            "board": {"fund": 30, "breadth": 20, "momentum": 20, "valuation": 10, "industry": 10, "event": 10},
-            "stock": {"tech": 25, "capital": 20, "fundamental": 20, "valuation": 10, "industry": 15, "event": 10},
-            "risk_cap": 25,
-            "entry_thr": 76,
-            "attack_thr": 72,
-        },
-        "defensive": {
-            "board": {"fund": 25, "breadth": 25, "momentum": 15, "valuation": 15, "industry": 10, "event": 10},
-            "stock": {"tech": 22, "capital": 18, "fundamental": 25, "valuation": 15, "industry": 12, "event": 8},
-            "risk_cap": 30,
-            "entry_thr": 79,
-            "attack_thr": 75,
-        },
-    }[style]
-    return {
-        "style": style,
-        "weights": weights,
-        "top_n": int(fcfg.get("top_n", 15)),
-        "board_attack_threshold": int(fcfg.get("board_attack_threshold", weights["attack_thr"])),
-        "stock_entry_threshold": float(fcfg.get("stock_entry_threshold", weights["entry_thr"])),
-        "manual_overrides": fcfg.get("manual_overrides", {}) or {},
-    }
+    from full_factor.config import get_full_factor_cfg
+
+    return get_full_factor_cfg(cfg)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -622,6 +566,7 @@ def display_cpo_daily_score(board_score: dict, stock_df: pd.DataFrame, cfg: dict
     if stock_df is None or stock_df.empty:
         return
 
+    from modules.scoring import select_cpo_candidates
     candidates = select_cpo_candidates(stock_df, regime, top_n=top_n)
     if HAS_RICH:
         t = Table(
@@ -695,89 +640,13 @@ def display_cpo_daily_score(board_score: dict, stock_df: pd.DataFrame, cfg: dict
             print("  - 无")
         else:
             for _, r in risk_df.iterrows():
+                atr_text = "-" if pd.isna(r.get("atr_pct")) else f"{float(r.get('atr_pct')):.2f}%"
+                gap_text = "-" if pd.isna(r.get("stop_loss_gap_pct")) else f"{float(r.get('stop_loss_gap_pct')):.2f}%"
                 print(
                     f"  {r.get('code')} {r.get('name')}  日更分={float(r.get('stock_score', 0)):.1f}  "
-                    f"ATR={('-' if pd.isna(r.get('atr_pct')) else f'{float(r.get('atr_pct')):.2f}%')}  "
-                    f"止损空间={('-' if pd.isna(r.get('stop_loss_gap_pct')) else f'{float(r.get('stop_loss_gap_pct')):.2f}%')}"
+                    f"ATR={atr_text}  "
+                    f"止损空间={gap_text}"
                 )
-
-
-def display_cpo_full_factor_score(board_score: dict, stock_df: pd.DataFrame, cfg: dict | None = None):
-    """Display CPO full-factor board + stock scorecards."""
-    if not board_score:
-        return
-    print_header("CPO 全量因子评分框架", style="bright_magenta")
-    top_n = _ff_cfg(cfg).get("top_n", 15)
-
-    if HAS_RICH:
-        bclr = {"进攻": "bright_red", "观察": "bright_yellow", "防守": "bright_green"}.get(board_score.get("board_regime"), "white")
-        s = board_score.get("sub_scores", {})
-        i = board_score.get("inputs", {})
-        summary = (
-            f"[bold]风格:[/] {board_score.get('style')}   [bold]板块分:[/] {board_score.get('board_score'):.1f}/100   "
-            f"[bold]状态:[/] [{bclr}]{board_score.get('board_regime')}[/]\n"
-            f"资金 {s.get('fund_score', 0):.1f} | 扩散 {s.get('breadth_score', 0):.1f} | 动量 {s.get('momentum_score', 0):.1f} | "
-            f"估值 {s.get('valuation_score', 0):.1f} | 产业景气 {s.get('industry_score', 0):.1f} | 事件 {s.get('event_score', 0):.1f}\n"
-            f"[dim]CPO/创业板 {i.get('ratio_pct', 0):.2f}% · 扩散 {i.get('breadth_pct', 0):.1f}% · "
-            f"均涨幅 {i.get('avg_pct_chg', 0):.2f}% · PE中位 {i.get('median_pe', '-')}"
-            f" · PB中位 {i.get('median_pb', '-')}[/]"
-        )
-        console.print(Panel(summary, title="板块评分卡 (全量因子)", border_style="magenta"))
-    else:
-        print(
-            f"  风格={board_score.get('style')}  板块分={board_score.get('board_score'):.1f}  "
-            f"状态={board_score.get('board_regime')}"
-        )
-
-    if stock_df is None or stock_df.empty:
-        return
-
-    show = stock_df.head(top_n).copy()
-    if HAS_RICH:
-        t = Table(title=f"成分股评分榜 (全量因子 Top {len(show)})", box=box.ROUNDED, show_lines=False)
-        t.add_column("排名", justify="right", style="dim")
-        t.add_column("代码", style="cyan")
-        t.add_column("名称")
-        t.add_column("分层", justify="center")
-        t.add_column("总分", justify="right")
-        t.add_column("技", justify="right")
-        t.add_column("资", justify="right")
-        t.add_column("基", justify="right")
-        t.add_column("估", justify="right")
-        t.add_column("产", justify="right")
-        t.add_column("事", justify="right")
-        t.add_column("风惩", justify="right")
-        t.add_column("入场", justify="center")
-        t.add_column("风险", justify="center")
-        for _, r in show.iterrows():
-            tier = str(r.get("stock_tier_full", "C"))
-            entry = "[green]是[/]" if bool(r.get("entry_flag_full")) else "[dim]否[/]"
-            risk = "[red]高[/]" if bool(r.get("risk_flag_full")) else "[green]低[/]"
-            t.add_row(
-                str(int(r.get("rank_full", 0))),
-                str(r.get("code", "")),
-                str(r.get("name", "")),
-                tier,
-                f"{float(r.get('full_factor_score', 0)):.1f}",
-                f"{float(r.get('full_tech_score', 0)):.1f}",
-                f"{float(r.get('full_capital_score', 0)):.1f}",
-                f"{float(r.get('full_fundamental_score', 0)):.1f}",
-                f"{float(r.get('full_valuation_score', 0)):.1f}",
-                f"{float(r.get('full_industry_score', 0)):.1f}",
-                f"{float(r.get('full_event_score', 0)):.1f}",
-                f"{float(r.get('full_risk_penalty', 0)):.1f}",
-                entry,
-                risk,
-            )
-        console.print(t)
-    else:
-        print("\n  成分股评分榜 (全量因子)")
-        for _, r in show.iterrows():
-            print(
-                f"  {int(r.get('rank_full', 0)):>2} {r.get('code')} {r.get('name')} "
-                f"总分={float(r.get('full_factor_score', 0)):.1f} 分层={r.get('stock_tier_full')} "
-                f"入场={'是' if bool(r.get('entry_flag_full')) else '否'} 风险={'高' if bool(r.get('risk_flag_full')) else '低'}"
-            )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -914,3 +783,6 @@ def export_results(chinext_data: dict, sector_data: dict, cpo_data: dict, path: 
             cpo.to_csv(path, index=False, encoding="utf-8-sig")
 
     print(f"\nExported to: {path}")
+
+
+from full_factor.presentation import display_cpo_full_factor_score

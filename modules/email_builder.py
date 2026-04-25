@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from full_factor.presentation import build_cpo_full_factor_email_section
 from modules.display import fmt_yi, fmt_pct, MILESTONES, _top90_sector_rows
 
 try:
@@ -131,9 +132,10 @@ def _section_sector(sector_data: dict) -> str:
         names  = " | ".join(rows_m["sector"].tolist())
         clr    = _MS_CLR[m]
         bg     = _MS_BG[m]
+        label = f'<b style="color:{clr}">Top {m}%</b>'
         p.append(
             f"<tr style='background:{bg}'>"
-            f"{_td(f'<b style=\"color:{clr}\">Top {m}%</b>', raw_html=True)}"
+            f"{_td(label, raw_html=True)}"
             f"{_td(str(n), 'center')}"
             f"{_td(names)}"
             f"{_td(fmt_yi(rows_m['turnover'].sum()), 'right')}"
@@ -281,6 +283,10 @@ def _section_cpo(cpo_data: dict) -> str:
         chg    = r.get("pct_chg", 0) or 0
         price  = f"{r['price']:.2f}" if pd.notna(r.get("price")) else "-"
         share  = r.get("turnover_share_pct", 0) or 0
+        share_text = f"{share:.2f}%"
+        cumulative_text = f"{cumulative:.1f}%"
+        turnover_rate_text = f"{r.get('turnover_rate', 0):.2f}%"
+        pe_text = f"{r.get('pe', 0):.2f}"
         p.append(
             f"<tr>"
             f"{_td(str(int(r['rank'])), 'right')}"
@@ -289,10 +295,10 @@ def _section_cpo(cpo_data: dict) -> str:
             f"{_td(price, 'right', width='4.0em', no_wrap=True)}"
             f"{_td(_hp(chg), 'right', _hc(chg))}"
             f"{_td(fmt_yi(r.get('turnover', 0)), 'right')}"
-            f"{_td(f'{share:.2f}%', 'right', bold=share>=5)}"
-            f"{_td(f'{cumulative:.1f}%', 'right')}"
-            f"{_td(f'{r.get("turnover_rate", 0):.2f}%', 'right')}"
-            f"{_td(f'{r.get("pe", 0):.2f}', 'right')}"
+            f"{_td(share_text, 'right', bold=share>=5)}"
+            f"{_td(cumulative_text, 'right')}"
+            f"{_td(turnover_rate_text, 'right')}"
+            f"{_td(pe_text, 'right')}"
 
             f"</tr>"
         )
@@ -404,12 +410,6 @@ def _section_cpo_daily_score(board_score: dict, stock_df: pd.DataFrame,
     inputs = board_score.get("inputs", {})
     style = str(inputs.get("style", "aggressive"))
 
-    # Import here to avoid circular dependency
-    if _ff_cfg_fn is None:
-        from modules.display import select_cpo_candidates
-    else:
-        select_cpo_candidates = _ff_cfg_fn
-
     p: list[str] = [f"<h3 style='{_H3}'>CPO 日更评分框架</h3>"]
     p.append(
         f"<table style='{_TS}'><tr>"
@@ -432,8 +432,7 @@ def _section_cpo_daily_score(board_score: dict, stock_df: pd.DataFrame,
     if stock_df is None or stock_df.empty:
         return "\n".join(p)
 
-    # Import the actual function from display
-    from modules.display import select_cpo_candidates
+    from modules.scoring import select_cpo_candidates
     picks = select_cpo_candidates(stock_df, regime, top_n=top_n)
     p.append(f"<p style='margin:8px 0 4px;font-weight:bold'>成分股评分榜 ({regime}模式)</p>")
     p.append(f"<table style='{_TS}'><tr>")
@@ -444,15 +443,18 @@ def _section_cpo_daily_score(board_score: dict, stock_df: pd.DataFrame,
         entry = "是" if bool(r.get("entry_flag")) and regime != "防守" else "否"
         risk = "高" if bool(r.get("risk_flag")) else "低"
         tier = str(r.get("stock_tier", "C"))
+        stock_score_text = f"{float(r.get('stock_score', 0)):.1f}"
+        turnover_rate_text = f"{float(r.get('turnover_rate', 0)):.2f}%"
+        turnover_share_text = f"{float(r.get('turnover_share_pct', 0)):.2f}%"
         p.append(
             f"<tr>"
             f"{_td(str(r.get('code', '')))}"
             f"{_td(str(r.get('name', '')))}"
             f"{_td(tier)}"
-            f"{_td(f'{float(r.get('stock_score', 0)):.1f}', 'right')}"
+            f"{_td(stock_score_text, 'right')}"
             f"{_td(str(int(r.get('score', 0))), 'right')}"
-            f"{_td(f'{float(r.get('turnover_rate', 0)):.2f}%', 'right')}"
-            f"{_td(f'{float(r.get('turnover_share_pct', 0)):.2f}%', 'right')}"
+            f"{_td(turnover_rate_text, 'right')}"
+            f"{_td(turnover_share_text, 'right')}"
             f"{_td(_hp(float(r.get('pct_chg', 0))), 'right', _hc(float(r.get('pct_chg', 0))))}"
             f"{_td(entry, 'center')}"
             f"{_td(risk, 'center', color='#b71c1c' if risk == '高' else '#2e7d32')}"
@@ -472,77 +474,16 @@ def _section_cpo_daily_score(board_score: dict, stock_df: pd.DataFrame,
         for _, r in risk_df.iterrows():
             atr_s = "-" if pd.isna(r.get("atr_pct")) else f"{float(r.get('atr_pct')):.2f}%"
             gap_s = "-" if pd.isna(r.get("stop_loss_gap_pct")) else f"{float(r.get('stop_loss_gap_pct')):.2f}%"
+            stock_score_text = f"{float(r.get('stock_score', 0)):.1f}"
             p.append(
                 f"<tr>"
                 f"{_td(str(r.get('code', '')))}"
                 f"{_td(str(r.get('name', '')))}"
-                f"{_td(f'{float(r.get('stock_score', 0)):.1f}', 'right')}"
+                f"{_td(stock_score_text, 'right')}"
                 f"{_td(atr_s, 'right')}"
                 f"{_td(gap_s, 'right')}"
                 f"</tr>"
             )
-    p.append("</table>")
-    return "\n".join(p)
-
-
-def _section_cpo_full_factor_score(board_score: dict, stock_df: pd.DataFrame,
-                                   cfg: dict | None = None) -> str:
-    if not board_score:
-        return ""
-    # Import here to avoid circular dependency
-    from modules.display import _ff_cfg
-    top_n = _ff_cfg(cfg).get("top_n", 15)
-    sub = board_score.get("sub_scores", {})
-    inputs = board_score.get("inputs", {})
-    p: list[str] = [f"<h3 style='{_H3}'>CPO 全量因子评分框架</h3>"]
-    p.append(
-        f"<table style='{_TS}'><tr>"
-        f"<td style='padding:6px 10px;border:1px solid #ddd'><b>风格</b><br>{board_score.get('style')}</td>"
-        f"<td style='padding:6px 10px;border:1px solid #ddd'><b>板块分</b><br>{board_score.get('board_score'):.1f}/100</td>"
-        f"<td style='padding:6px 10px;border:1px solid #ddd'><b>状态</b><br>{board_score.get('board_regime')}</td>"
-        f"<td style='padding:6px 10px;border:1px solid #ddd'><b>资金</b><br>{sub.get('fund_score', 0):.1f}</td>"
-        f"<td style='padding:6px 10px;border:1px solid #ddd'><b>扩散</b><br>{sub.get('breadth_score', 0):.1f}</td>"
-        f"<td style='padding:6px 10px;border:1px solid #ddd'><b>动量</b><br>{sub.get('momentum_score', 0):.1f}</td>"
-        f"<td style='padding:6px 10px;border:1px solid #ddd'><b>估值</b><br>{sub.get('valuation_score', 0):.1f}</td>"
-        f"<td style='padding:6px 10px;border:1px solid #ddd'><b>产业景气</b><br>{sub.get('industry_score', 0):.1f}</td>"
-        f"<td style='padding:6px 10px;border:1px solid #ddd'><b>事件</b><br>{sub.get('event_score', 0):.1f}</td>"
-        f"</tr></table>"
-    )
-    p.append(
-        f"<p style='margin:2px 0 10px;color:#666'>"
-        f"CPO/创业板: {inputs.get('ratio_pct', 0):.2f}% | 扩散: {inputs.get('breadth_pct', 0):.1f}% | "
-        f"均涨幅: {inputs.get('avg_pct_chg', 0):.2f}% | PE中位: {inputs.get('median_pe', '-')} | PB中位: {inputs.get('median_pb', '-')}"
-        f"</p>"
-    )
-    if stock_df is None or stock_df.empty:
-        return "\n".join(p)
-
-    top = stock_df.head(top_n)
-    p.append(f"<p style='margin:8px 0 4px;font-weight:bold'>成分股评分榜 (全量因子 Top {len(top)})</p>")
-    p.append(f"<table style='{_TS}'><tr>")
-    p.append("".join(_th(h, "right" if i >= 4 else "left")
-                     for i, h in enumerate([
-                         "代码", "名称", "分层", "总分", "技", "资", "基", "估", "产", "事", "风惩", "入场", "风险"
-                     ])))
-    p.append("</tr>")
-    for _, r in top.iterrows():
-        p.append(
-            f"<tr>"
-            f"{_td(str(r.get('code', '')))}"
-            f"{_td(str(r.get('name', '')))}"
-            f"{_td(str(r.get('stock_tier_full', 'C')))}"
-            f"{_td(f'{float(r.get('full_factor_score', 0)):.1f}', 'right')}"
-            f"{_td(f'{float(r.get('full_tech_score', 0)):.1f}', 'right')}"
-            f"{_td(f'{float(r.get('full_capital_score', 0)):.1f}', 'right')}"
-            f"{_td(f'{float(r.get('full_fundamental_score', 0)):.1f}', 'right')}"
-            f"{_td(f'{float(r.get('full_valuation_score', 0)):.1f}', 'right')}"
-            f"{_td(f'{float(r.get('full_industry_score', 0)):.1f}', 'right')}"
-            f"{_td(f'{float(r.get('full_event_score', 0)):.1f}', 'right')}"
-            f"{_td(f'{float(r.get('full_risk_penalty', 0)):.1f}', 'right')}"
-            f"{_td('是' if bool(r.get('entry_flag_full')) else '否', 'center')}"
-            f"{_td('高' if bool(r.get('risk_flag_full')) else '低', 'center', color='#b71c1c' if bool(r.get('risk_flag_full')) else '#2e7d32')}"
-            f"</tr>"
-        )
     p.append("</table>")
     return "\n".join(p)
 
@@ -581,7 +522,7 @@ def build_email_html(chinext_data: dict, sector_data: dict,
         sections.append(_section_cpo_daily_score(cpo_board_score, stock_df, cfg=cfg))
     if cpo_full_board_score:
         ff_df = cpo_full_stock_score_df if cpo_full_stock_score_df is not None else pd.DataFrame()
-        sections.append(_section_cpo_full_factor_score(cpo_full_board_score, ff_df, cfg=cfg))
+        sections.append(build_cpo_full_factor_email_section(cpo_full_board_score, ff_df, cfg=cfg))
     if sector_data:
         sections.append(_section_constituents(sector_data))
     sections.append(
