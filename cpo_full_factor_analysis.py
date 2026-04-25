@@ -49,6 +49,7 @@ from modules.display import (
 )
 from full_factor import (
     build_cpo_full_factor_board_score,
+    build_cpo_full_factor_portfolio_plan,
     build_cpo_full_factor_stock_score_df,
     display_cpo_full_factor_score,
 )
@@ -199,10 +200,16 @@ def main():
             cpo_full_board_score = build_cpo_full_factor_board_score(chinext_data, cpo_data, tech_df=tech_df, cfg=cfg)
             cpo_full_stock_score_df = build_cpo_full_factor_stock_score_df(
                 cpo_data, tech_df, board_score=cpo_full_board_score, cfg=cfg,
-                flows_data=flows_data if flows_data else None,
-                fund_data=fund_data if fund_data else None,
+                flows_data=flows_data,
+                fund_data=fund_data,
             )
-            display_cpo_full_factor_score(cpo_full_board_score, cpo_full_stock_score_df, cfg=cfg)
+            cpo_portfolio_plan = build_cpo_full_factor_portfolio_plan(
+                cpo_full_board_score, cpo_full_stock_score_df, cfg=cfg
+            )
+            display_cpo_full_factor_score(
+                cpo_full_board_score, cpo_full_stock_score_df, cfg=cfg,
+                portfolio_plan=cpo_portfolio_plan,
+            )
 
     if sector_data:
         display_constituent_analysis(sector_data)
