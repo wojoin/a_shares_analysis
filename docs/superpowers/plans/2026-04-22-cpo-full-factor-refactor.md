@@ -47,7 +47,7 @@
 - Create: `tests/__init__.py`
 - Modify: `requirements.txt`
 
-- [ ] **Step 1: Initialize git repository**
+- [x] **Step 1: Initialize git repository**
 
 ```bash
 cd /Users/joseph/AI/claude/project/a_shared_analysis
@@ -59,14 +59,14 @@ echo "*.pkl" >> .gitignore
 echo ".env" >> .gitignore
 ```
 
-- [ ] **Step 2: Create modules package**
+- [x] **Step 2: Create modules package**
 
 ```bash
 mkdir -p modules tests
 touch modules/__init__.py tests/__init__.py
 ```
 
-- [ ] **Step 3: Add pytest to requirements**
+- [x] **Step 3: Add pytest to requirements**
 
 Add to `requirements.txt`:
 ```
@@ -78,7 +78,7 @@ Install:
 pip install pytest
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add .
@@ -101,7 +101,7 @@ Move the cache layer and config loader out of `cpo_full_factor_analysis.py`.
 - Create: `tests/test_cache.py`
 - Modify: `cpo_full_factor_analysis.py`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `tests/test_cache.py`:
 
@@ -159,7 +159,7 @@ def test_get_cached_force_returns_none():
     assert result is None
 ```
 
-- [ ] **Step 2: Run test to confirm it fails**
+- [x] **Step 2: Run test to confirm it fails**
 
 ```bash
 pytest tests/test_cache.py -v
@@ -167,7 +167,7 @@ pytest tests/test_cache.py -v
 
 Expected: `ModuleNotFoundError: No module named 'modules.cache'`
 
-- [ ] **Step 3: Create modules/cache.py**
+- [x] **Step 3: Create modules/cache.py**
 
 Create `modules/cache.py` by extracting from `cpo_full_factor_analysis.py`:
 
@@ -250,7 +250,7 @@ def load_config() -> dict:
         return {}
 ```
 
-- [ ] **Step 4: Run tests to confirm they pass**
+- [x] **Step 4: Run tests to confirm they pass**
 
 ```bash
 pytest tests/test_cache.py -v
@@ -258,7 +258,7 @@ pytest tests/test_cache.py -v
 
 Expected: all 5 tests PASS
 
-- [ ] **Step 5: Update cpo_full_factor_analysis.py imports**
+- [x] **Step 5: Update cpo_full_factor_analysis.py imports**
 
 At the top of `cpo_full_factor_analysis.py`, replace the inline cache block (lines 67–121) with:
 
@@ -272,7 +272,7 @@ from modules.cache import (
 
 Also remove the inline `load_config` function (currently around line 2233).
 
-- [ ] **Step 6: Verify script still loads**
+- [x] **Step 6: Verify script still loads**
 
 ```bash
 python3 -c "import cpo_full_factor_analysis; print('OK')"
@@ -281,7 +281,7 @@ python3 cpo_full_factor_analysis.py --help
 
 Expected: no errors, `--help` prints usage.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add modules/cache.py tests/test_cache.py cpo_full_factor_analysis.py requirements.txt
@@ -303,7 +303,7 @@ Move all terminal display functions and the export function.
 - Create: `modules/display.py`
 - Modify: `cpo_full_factor_analysis.py`
 
-- [ ] **Step 1: Create modules/display.py**
+- [x] **Step 1: Create modules/display.py**
 
 ```python
 from __future__ import annotations
@@ -341,7 +341,7 @@ Then move the following functions verbatim from `cpo_full_factor_analysis.py`:
 - `display_cpo_full_factor_score` (line 2007)
 - `export_results` (line 2089)
 
-- [ ] **Step 2: Update cpo_full_factor_analysis.py**
+- [x] **Step 2: Update cpo_full_factor_analysis.py**
 
 Replace the extracted blocks with a single import block near the top:
 
@@ -356,7 +356,7 @@ from modules.display import (
 
 Also update `modules/display.py` to import `HAS_RICH`, `console`, `Table`, `Panel`, `box` from its own initialization — not from the main script.
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 ```bash
 python3 -c "from modules.display import display_chinext, export_results; print('OK')"
@@ -365,7 +365,7 @@ python3 cpo_full_factor_analysis.py --help
 
 Expected: no errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add modules/display.py cpo_full_factor_analysis.py
@@ -389,7 +389,7 @@ Move all HTML email construction and the SMTP sender.
 - Create: `modules/email_builder.py`
 - Modify: `cpo_full_factor_analysis.py`
 
-- [ ] **Step 1: Create modules/email_builder.py**
+- [x] **Step 1: Create modules/email_builder.py**
 
 ```python
 from __future__ import annotations
@@ -414,20 +414,20 @@ Then move verbatim from `cpo_full_factor_analysis.py`:
 - `build_email_html`
 - `send_email`
 
-- [ ] **Step 2: Update cpo_full_factor_analysis.py imports**
+- [x] **Step 2: Update cpo_full_factor_analysis.py imports**
 
 ```python
 from modules.email_builder import build_email_html, send_email
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 ```bash
 python3 -c "from modules.email_builder import build_email_html, send_email; print('OK')"
 python3 cpo_full_factor_analysis.py --help
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add modules/email_builder.py cpo_full_factor_analysis.py
@@ -448,7 +448,7 @@ git commit -m "refactor: extract modules/email_builder.py"
 - Create: `modules/spot.py`
 - Modify: `cpo_full_factor_analysis.py`
 
-- [ ] **Step 1: Create modules/spot.py**
+- [x] **Step 1: Create modules/spot.py**
 
 ```python
 from __future__ import annotations
@@ -487,20 +487,20 @@ Then move verbatim:
 - `_fetch_spot_data` (line 253)
 - `fetch_chinext_turnover` (line 315)
 
-- [ ] **Step 2: Update cpo_full_factor_analysis.py**
+- [x] **Step 2: Update cpo_full_factor_analysis.py**
 
 ```python
 from modules.spot import _PROVIDER_MAP, _PROVIDER_DISPLAY, fetch_chinext_turnover
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 ```bash
 python3 -c "from modules.spot import fetch_chinext_turnover; print('OK')"
 python3 cpo_full_factor_analysis.py --help
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add modules/spot.py cpo_full_factor_analysis.py
@@ -520,7 +520,7 @@ git commit -m "refactor: extract modules/spot.py"
 - Create: `modules/cpo.py`
 - Modify: `cpo_full_factor_analysis.py`
 
-- [ ] **Step 1: Create modules/sector.py**
+- [x] **Step 1: Create modules/sector.py**
 
 ```python
 from __future__ import annotations
@@ -533,7 +533,7 @@ from modules.cache import _get_cached, _save_cache, _print_cache_hit
 
 Move `fetch_chinext_sector_analysis` (lines 358–514) verbatim.
 
-- [ ] **Step 2: Create modules/cpo.py**
+- [x] **Step 2: Create modules/cpo.py**
 
 ```python
 from __future__ import annotations
@@ -546,21 +546,21 @@ from modules.cache import _get_cached, _save_cache
 
 Move `fetch_cpo_data` (lines 519–578) verbatim.
 
-- [ ] **Step 3: Update cpo_full_factor_analysis.py**
+- [x] **Step 3: Update cpo_full_factor_analysis.py**
 
 ```python
 from modules.sector import fetch_chinext_sector_analysis
 from modules.cpo import fetch_cpo_data
 ```
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 ```bash
 python3 -c "from modules.sector import fetch_chinext_sector_analysis; from modules.cpo import fetch_cpo_data; print('OK')"
 python3 cpo_full_factor_analysis.py --help
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add modules/sector.py modules/cpo.py cpo_full_factor_analysis.py
@@ -587,7 +587,7 @@ Functions to move:
 - Create: `modules/technicals.py`
 - Modify: `cpo_full_factor_analysis.py`
 
-- [ ] **Step 1: Create modules/technicals.py**
+- [x] **Step 1: Create modules/technicals.py**
 
 ```python
 from __future__ import annotations
@@ -601,20 +601,20 @@ from modules.cache import _get_cached, _save_cache
 
 Move the 8 functions verbatim from lines 583–910.
 
-- [ ] **Step 2: Update cpo_full_factor_analysis.py**
+- [x] **Step 2: Update cpo_full_factor_analysis.py**
 
 ```python
 from modules.technicals import fetch_cpo_technicals
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 ```bash
 python3 -c "from modules.technicals import fetch_cpo_technicals; print('OK')"
 python3 cpo_full_factor_analysis.py --help
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add modules/technicals.py cpo_full_factor_analysis.py
@@ -636,7 +636,7 @@ Functions to move:
 - Create: `modules/scoring.py`
 - Modify: `cpo_full_factor_analysis.py`
 
-- [ ] **Step 1: Create modules/scoring.py**
+- [x] **Step 1: Create modules/scoring.py**
 
 ```python
 from __future__ import annotations
@@ -649,20 +649,20 @@ from modules.display import fmt_yi, fmt_pct
 
 Move the 3 functions verbatim from lines 911–1179.
 
-- [ ] **Step 2: Update cpo_full_factor_analysis.py**
+- [x] **Step 2: Update cpo_full_factor_analysis.py**
 
 ```python
 from modules.scoring import build_cpo_board_score, build_cpo_stock_score_df, select_cpo_candidates
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 ```bash
 python3 -c "from modules.scoring import build_cpo_board_score; print('OK')"
 python3 cpo_full_factor_analysis.py --help
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add modules/scoring.py cpo_full_factor_analysis.py
@@ -679,11 +679,11 @@ The main script has inline versions of `build_cpo_full_factor_board_score`, `bui
 - Modify: `cpo_full_factor_analysis.py`
 - Modify: `modules/display.py`
 
-- [ ] **Step 1: Remove inline full-factor block from main script**
+- [x] **Step 1: Remove inline full-factor block from main script**
 
 Delete lines 1180–1444 (the `# Full-Factor Model` section: `_ff_cfg`, `_apply_manual_score`, `build_cpo_full_factor_board_score`, `build_cpo_full_factor_stock_score_df`).
 
-- [ ] **Step 2: Add full_factor/ imports to main script**
+- [x] **Step 2: Add full_factor/ imports to main script**
 
 ```python
 from full_factor import (
@@ -698,7 +698,7 @@ from full_factor.presentation import (
 )
 ```
 
-- [ ] **Step 3: Update display.py to re-export from full_factor.presentation**
+- [x] **Step 3: Update display.py to re-export from full_factor.presentation**
 
 In `modules/display.py`, replace the inline `display_cpo_full_factor_score` function with:
 
@@ -706,7 +706,7 @@ In `modules/display.py`, replace the inline `display_cpo_full_factor_score` func
 from full_factor.presentation import display_cpo_full_factor_score
 ```
 
-- [ ] **Step 4: Update main() to use portfolio_plan**
+- [x] **Step 4: Update main() to use portfolio_plan**
 
 In `main()`, after computing `cpo_full_board_score` and `cpo_full_stock_score_df`, add:
 
@@ -725,14 +725,14 @@ display_cpo_full_factor_score(
 )
 ```
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 ```bash
 python3 -c "from full_factor import build_cpo_full_factor_board_score; print('OK')"
 python3 cpo_full_factor_analysis.py --help
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add cpo_full_factor_analysis.py modules/display.py
@@ -753,7 +753,7 @@ New module fetching 主力净流入 and 北向净流入 for CPO constituent stoc
 - Create: `modules/flows.py`
 - Create: `tests/test_flows.py`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Create `tests/test_flows.py`:
 
@@ -791,7 +791,7 @@ def test_build_flows_data_empty_cons():
     assert result == {}
 ```
 
-- [ ] **Step 2: Run tests to confirm they fail**
+- [x] **Step 2: Run tests to confirm they fail**
 
 ```bash
 pytest tests/test_flows.py -v
@@ -799,7 +799,7 @@ pytest tests/test_flows.py -v
 
 Expected: `ModuleNotFoundError`
 
-- [ ] **Step 3: Create modules/flows.py**
+- [x] **Step 3: Create modules/flows.py**
 
 ```python
 from __future__ import annotations
@@ -892,7 +892,7 @@ def fetch_flows(
     return results
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 pytest tests/test_flows.py -v
@@ -900,7 +900,7 @@ pytest tests/test_flows.py -v
 
 Expected: all 4 tests PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add modules/flows.py tests/test_flows.py
@@ -917,7 +917,7 @@ New module fetching ROE, revenue growth, gross margin, debt ratio, and R&D inten
 - Create: `modules/fundamentals.py`
 - Create: `tests/test_fundamentals.py`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Create `tests/test_fundamentals.py`:
 
@@ -969,13 +969,13 @@ def test_build_fund_data_empty():
     assert result == {}
 ```
 
-- [ ] **Step 2: Run tests to confirm they fail**
+- [x] **Step 2: Run tests to confirm they fail**
 
 ```bash
 pytest tests/test_fundamentals.py -v
 ```
 
-- [ ] **Step 3: Create modules/fundamentals.py**
+- [x] **Step 3: Create modules/fundamentals.py**
 
 ```python
 from __future__ import annotations
@@ -1089,7 +1089,7 @@ def fetch_fundamentals(
     return results
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 ```bash
 pytest tests/test_fundamentals.py -v
@@ -1097,7 +1097,7 @@ pytest tests/test_fundamentals.py -v
 
 Expected: all 4 tests PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add modules/fundamentals.py tests/test_fundamentals.py
@@ -1113,7 +1113,7 @@ Add CPO supplement factor config: cloud capex, trade risk, chain position, comme
 **Files:**
 - Modify: `full_factor/config.py`
 
-- [ ] **Step 1: Extend `get_full_factor_cfg()` to read CPO supplement fields**
+- [x] **Step 1: Extend `get_full_factor_cfg()` to read CPO supplement fields**
 
 In `full_factor/config.py`, add after the existing `return {...}` dict construction (before the closing brace):
 
@@ -1144,7 +1144,7 @@ Update the returned dict to include:
     }
 ```
 
-- [ ] **Step 2: Update config.example.json (if it exists) or note in README**
+- [x] **Step 2: Update config.example.json (if it exists) or note in README**
 
 Add the following to `config.json` structure documentation (in comments or example):
 
@@ -1172,7 +1172,7 @@ Add the following to `config.json` structure documentation (in comments or examp
 }
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 ```bash
 python3 -c "
@@ -1185,7 +1185,7 @@ print('OK')
 "
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add full_factor/config.py
@@ -1202,7 +1202,7 @@ Wire `flows_data` and `fund_data` into the scoring functions. Add CPO-specific r
 - Modify: `full_factor/scoring.py`
 - Create: `tests/test_scoring_ff.py`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Create `tests/test_scoring_ff.py`:
 
@@ -1292,7 +1292,7 @@ def test_commercialization_stage_modifies_conviction():
     assert conv_mass > conv_rd, "mass stage should yield higher conviction than rd"
 ```
 
-- [ ] **Step 2: Run tests to confirm they fail**
+- [x] **Step 2: Run tests to confirm they fail**
 
 ```bash
 pytest tests/test_scoring_ff.py -v
@@ -1300,7 +1300,7 @@ pytest tests/test_scoring_ff.py -v
 
 Expected: `test_trade_risk_high_sets_risk_flag` and `test_customer_concentration_triggers_risk` fail (feature not yet implemented)
 
-- [ ] **Step 3: Update `build_cpo_full_factor_stock_score_df` signature and capital score**
+- [x] **Step 3: Update `build_cpo_full_factor_stock_score_df` signature and capital score**
 
 In `full_factor/scoring.py`, update the function signature:
 
@@ -1339,7 +1339,7 @@ After the existing `capital_ratio` calculation (after the `capital_score` line),
         capital_score = (capital_ratio * ws["capital"]).clip(0, ws["capital"])
 ```
 
-- [ ] **Step 4: Update fundamental score to use fund_data**
+- [x] **Step 4: Update fundamental score to use fund_data**
 
 Replace the existing `fundamental_ratio` calculation with:
 
@@ -1382,7 +1382,7 @@ Replace the existing `fundamental_ratio` calculation with:
     fundamental_score = (fundamental_ratio * ws["fundamental"]).clip(0, ws["fundamental"])
 ```
 
-- [ ] **Step 5: Add CPO-specific risk penalties**
+- [x] **Step 5: Add CPO-specific risk penalties**
 
 After the existing `risk_penalty` block, add:
 
@@ -1406,7 +1406,7 @@ After the existing `risk_penalty` block, add:
     risk_penalty = risk_penalty.clip(-risk_cap, 0)
 ```
 
-- [ ] **Step 6: Apply commercialization stage to conviction**
+- [x] **Step 6: Apply commercialization stage to conviction**
 
 After the `conviction` calculation, add:
 
@@ -1422,7 +1422,7 @@ After the `conviction` calculation, add:
     merged["conviction"] = (conviction * stage_mult).round(3).clip(0, 1)
 ```
 
-- [ ] **Step 7: Update `build_cpo_full_factor_board_score` for cloud capex**
+- [x] **Step 7: Update `build_cpo_full_factor_board_score` for cloud capex**
 
 Add `cloud_capex_cfg` to the board score's industry sub-score. After existing `industry_score` calculation:
 
@@ -1436,7 +1436,7 @@ Add `cloud_capex_cfg` to the board score's industry sub-score. After existing `i
     ), 1)
 ```
 
-- [ ] **Step 8: Run tests**
+- [x] **Step 8: Run tests**
 
 ```bash
 pytest tests/test_scoring_ff.py -v
@@ -1444,7 +1444,7 @@ pytest tests/test_scoring_ff.py -v
 
 Expected: all 5 tests PASS
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add full_factor/scoring.py tests/test_scoring_ff.py
@@ -1460,7 +1460,7 @@ Bring `cpo_full_factor_analysis.py` to its final form: thin orchestrator with `T
 **Files:**
 - Modify: `cpo_full_factor_analysis.py`
 
-- [ ] **Step 1: Add new CLI flags to `parse_args()`**
+- [x] **Step 1: Add new CLI flags to `parse_args()`**
 
 In `parse_args()`, add:
 
@@ -1471,14 +1471,14 @@ parser.add_argument("--no-fundamentals",   action="store_true",
                     help="Skip fundamental data fetch (ROE/revenue/margins)")
 ```
 
-- [ ] **Step 2: Add imports at top of main script**
+- [x] **Step 2: Add imports at top of main script**
 
 ```python
 from modules.flows        import fetch_flows
 from modules.fundamentals import fetch_fundamentals
 ```
 
-- [ ] **Step 3: Update `main()` to fetch flows + fundamentals concurrently**
+- [x] **Step 3: Update `main()` to fetch flows + fundamentals concurrently**
 
 In `main()`, after `display_cpo(cpo_data)` and before the technicals block, add:
 
@@ -1521,7 +1521,7 @@ In `main()`, after `display_cpo(cpo_data)` and before the technicals block, add:
             print(f"  [warn] fundamentals fetch failed: {e}")
 ```
 
-- [ ] **Step 4: Pass flows_data and fund_data to full-factor scoring**
+- [x] **Step 4: Pass flows_data and fund_data to full-factor scoring**
 
 Update the full-factor scoring calls in `main()`:
 
@@ -1538,7 +1538,7 @@ Update the full-factor scoring calls in `main()`:
             )
 ```
 
-- [ ] **Step 5: Verify full script runs with new flags**
+- [x] **Step 5: Verify full script runs with new flags**
 
 ```bash
 python3 cpo_full_factor_analysis.py --help
@@ -1560,7 +1560,7 @@ Or simply:
 python3 cpo_full_factor_analysis.py --no-chinext --no-sector --no-flows --no-fundamentals --no-email 2>&1 | head -20
 ```
 
-- [ ] **Step 6: Run all tests**
+- [x] **Step 6: Run all tests**
 
 ```bash
 pytest tests/ -v
@@ -1568,7 +1568,7 @@ pytest tests/ -v
 
 Expected: all tests PASS
 
-- [ ] **Step 7: Final commit**
+- [x] **Step 7: Final commit**
 
 ```bash
 git add cpo_full_factor_analysis.py

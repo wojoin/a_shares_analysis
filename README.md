@@ -343,6 +343,10 @@ cp config.example.json config.json
 | `spot_fetch.providers` | Ordered list of data providers to try: `["东方财富","同花顺"]` |
 | `spot_fetch.max_retries` | Retries per provider before falling back (default `3`) |
 | `spot_fetch.timeout` | Max total seconds across all retry attempts (omit for no limit) |
+| `full_factor.style` | Full-factor model style: `aggressive`, `balanced`, or `defensive` |
+| `full_factor.trade_risk_level` | CPO supplement trade-risk level: `low`, `medium`, or `high` |
+| `full_factor.cpo_cloud_capex` | CPO cloud CapEx supplement metadata such as level, YoY growth, and update period |
+| `full_factor.manual_overrides` | Per-stock CPO supplement overrides such as chain position, commercialization stage, customer concentration, and factor ratios |
 | `smtp.host` | SMTP server (`smtp.qq.com` for QQ Mail) |
 | `smtp.port` | SMTP port (`465` for QQ Mail SSL) |
 | `smtp.use_ssl` | `true` for port 465; `false` for port 587 STARTTLS |
@@ -354,6 +358,32 @@ cp config.example.json config.json
 | `sender` | From address (usually same as `smtp.username`) |
 | `recipients` | JSON array of recipient email addresses |
 | `subject_prefix` | Prepended to every subject, e.g. `"[A股分析]"` |
+
+Example CPO full-factor supplement config:
+
+```json
+{
+  "full_factor": {
+    "style": "balanced",
+    "trade_risk_level": "low",
+    "cpo_cloud_capex": {
+      "level": "high",
+      "yoy_growth": 0.45,
+      "updated": "2026-Q1"
+    },
+    "manual_overrides": {
+      "300308": {
+        "chain_position": "mid",
+        "commercialization_stage": "mass",
+        "top2_customer_pct": 0.65,
+        "fundamental_ratio": 0.6,
+        "industry_chain_ratio": 0.7,
+        "event_ratio": 0.5
+      }
+    }
+  }
+}
+```
 
 In QQ Mail: **Settings → Account → Enable IMAP/SMTP service → generate 授权码**.  
 Use the **授权码** as the password — not your QQ login password.
