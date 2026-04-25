@@ -43,8 +43,8 @@
     "host": "smtp.qq.com",
     "port": 465,
     "use_ssl": true,
-    "username": "1003257670@qq.com",
-    "password": "ulklxqjrakwkbdca"
+    "username": "xxxx@qq.com",
+    "password": "xxxxxxxxxxxxxxxx"
   },
 
   "imap": {
