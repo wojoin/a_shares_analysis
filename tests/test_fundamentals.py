@@ -39,9 +39,51 @@ def test_parse_financial_row_non_numeric():
     assert result["revenue_yoy"] is None
 
 
+def test_parse_financial_row_explicit_percent_under_one():
+    from modules.fundamentals import _parse_financial_row
+
+    result = _parse_financial_row({"净资产收益率": "0.8%"})
+    assert abs(result["roe"] - 0.008) < 0.0001
+
+
+def test_parse_financial_row_nan_returns_none():
+    from modules.fundamentals import _parse_financial_row
+
+    result = _parse_financial_row({"净资产收益率": float("nan")})
+    assert result["roe"] is None
+
+
 def test_build_fund_data_empty():
     from modules.fundamentals import fetch_fundamentals
 
     result = fetch_fundamentals(pd.DataFrame(), "test", force_update=False)
     assert isinstance(result, dict)
+    assert result == {}
+
+
+def test_fetch_fundamentals_empty_cons_ignores_cache(monkeypatch):
+    from modules.fundamentals import fetch_fundamentals
+    import modules.fundamentals as fund_mod
+
+    monkeypatch.setattr(
+        fund_mod,
+        "_get_cached",
+        lambda key, force_update: {"300308": {"roe": 0.2}},
+    )
+
+    result = fetch_fundamentals(pd.DataFrame(), "test", force_update=False)
+    assert result == {}
+
+
+def test_fetch_fundamentals_missing_code_ignores_cache(monkeypatch):
+    from modules.fundamentals import fetch_fundamentals
+    import modules.fundamentals as fund_mod
+
+    monkeypatch.setattr(
+        fund_mod,
+        "_get_cached",
+        lambda key, force_update: {"300308": {"roe": 0.2}},
+    )
+
+    result = fetch_fundamentals(pd.DataFrame({"name": ["中际旭创"]}), "test", force_update=False)
     assert result == {}

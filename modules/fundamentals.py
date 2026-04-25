@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import akshare as ak
@@ -8,6 +9,7 @@ import pandas as pd
 from modules.cache import _get_cached, _save_cache
 
 _MAX_WORKERS = 8
+_log = logging.getLogger(__name__)
 
 
 def _parse_financial_row(row: dict) -> dict:
@@ -21,8 +23,14 @@ def _parse_financial_row(row: dict) -> dict:
         if val is None:
             return None
         try:
-            f = float(str(val).replace(",", "").replace("%", "").strip())
-            return f / 100.0 if abs(f) > 1.5 else f
+            raw = str(val).replace(",", "").strip()
+            is_percent = raw.endswith("%")
+            f = float(raw.replace("%", ""))
+            if f != f:
+                return None
+            # akshare returns some fields as "18.5" (percent) and others as "0.185" (ratio);
+            # explicit "%" suffix is definitive; abs > 1.5 catches the bare-percent form.
+            return f / 100.0 if is_percent or abs(f) > 1.5 else f
         except (ValueError, TypeError):
             return None
 
@@ -68,7 +76,8 @@ def _fetch_single_stock_fundamentals(code: str) -> dict:
         if df is None or df.empty:
             return _empty_fundamentals()
         return _parse_financial_row(df.iloc[0].to_dict())
-    except Exception:
+    except Exception as e:
+        _log.debug("stock_financial_analysis_indicator failed for %s: %s", code, e)
         return _empty_fundamentals()
 
 
@@ -81,15 +90,15 @@ def fetch_fundamentals(
     Fetch financial indicators for CPO constituent stocks.
     Returns a daily-cached dict keyed by stock code.
     """
+    if cons_df is None or cons_df.empty or "code" not in cons_df.columns:
+        return {}
+
     safe = "".join(c if c.isalnum() else "_" for c in concept_name)
     cache_key = f"fund_{safe}"
 
     cached = _get_cached(cache_key, force_update)
     if cached is not None:
         return {str(k): v for k, v in cached.items()}
-
-    if cons_df is None or cons_df.empty or "code" not in cons_df.columns:
-        return {}
 
     codes = cons_df["code"].astype(str).tolist()
     print(f"  Fetching fundamentals for {len(codes)} CPO stocks...")
@@ -100,7 +109,11 @@ def fetch_fundamentals(
         done = 0
         for fut in as_completed(futures):
             code = futures[fut]
-            results[code] = fut.result()
+            try:
+                results[code] = fut.result()
+            except Exception as e:
+                _log.warning("fundamentals worker raised for %s: %s", code, e)
+                results[code] = _empty_fundamentals()
             done += 1
             print(f"  fundamentals {done}/{len(codes)}\r", end="")
     print()
