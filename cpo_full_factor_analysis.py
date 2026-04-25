@@ -149,39 +149,40 @@ def main():
                               spot_provider=spot_provider)
     display_cpo(cpo_data)
 
-    flows_data: dict = {}
-    fund_data: dict = {}
     if cpo_data:
+        flows_data: dict = {}
+        fund_data: dict = {}
         fetch_kwargs = {
             "cons_df": cpo_data["cons"],
             "concept_name": args.concept,
             "force_update": force,
         }
-        fetch_flows_enabled = not args.no_flows
-        fetch_fund_enabled = not args.no_fundamentals
 
-        if fetch_flows_enabled and fetch_fund_enabled:
-            with ThreadPoolExecutor(max_workers=2) as ex:
+        if not args.no_flows and not args.no_fundamentals:
+            with ThreadPoolExecutor(max_workers=2) as ex:  # one thread per fetch
                 flow_future = ex.submit(fetch_flows, **fetch_kwargs)
                 fund_future = ex.submit(fetch_fundamentals, **fetch_kwargs)
                 try:
                     flows_data = flow_future.result()
                 except Exception as exc:
-                    print(f"Warning: capital flow fetch failed: {exc}")
+                    print(f"  [warn] capital flow fetch failed: {exc}")
                 try:
                     fund_data = fund_future.result()
                 except Exception as exc:
-                    print(f"Warning: fundamental data fetch failed: {exc}")
-        elif fetch_flows_enabled:
+                    print(f"  [warn] fundamental data fetch failed: {exc}")
+        elif not args.no_flows:
             try:
                 flows_data = fetch_flows(**fetch_kwargs)
             except Exception as exc:
-                print(f"Warning: capital flow fetch failed: {exc}")
-        elif fetch_fund_enabled:
+                print(f"  [warn] capital flow fetch failed: {exc}")
+        elif not args.no_fundamentals:
             try:
                 fund_data = fetch_fundamentals(**fetch_kwargs)
             except Exception as exc:
-                print(f"Warning: fundamental data fetch failed: {exc}")
+                print(f"  [warn] fundamental data fetch failed: {exc}")
+    else:
+        flows_data = {}
+        fund_data = {}
 
     tech_df: pd.DataFrame = pd.DataFrame()
     cpo_board_score: dict = {}
