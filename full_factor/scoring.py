@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
 import numpy as np
 import pandas as pd
 
 from full_factor.config import get_full_factor_cfg
 from modules.display import _clip
+
+_log = logging.getLogger(__name__)
 
 
 def _apply_manual_score(df: pd.DataFrame, manual: dict, key: str, default: float) -> pd.Series:
@@ -23,7 +26,7 @@ def _norm01(series: pd.Series, method: str = "quantile") -> pd.Series:
         vmin = vals.min()
         vmax = vals.max()
         if pd.isna(vmin) or pd.isna(vmax) or vmax == vmin:
-            return pd.Series(np.where(vals.notna(), 0.5, 0.5), index=series.index, dtype=float)
+            return pd.Series(0.5, index=series.index, dtype=float)
         return ((vals - vmin) / (vmax - vmin)).fillna(0.5).clip(0, 1)
     return vals.rank(pct=True).fillna(0.5).clip(0, 1)
 
@@ -178,13 +181,17 @@ def build_cpo_full_factor_stock_score_df(cpo_data: dict, tech_df: pd.DataFrame,
         north_inflow = merged["code"].astype(str).map(
             lambda c: (flows_data.get(c) or {}).get("north_net_inflow")
         )
-        capital_ratio = (
+        has_flow = main_inflow.notna() | north_inflow.notna()
+        blended_ratio = (
             0.25 * _norm01(merged["turnover_rate"], method) +
             0.25 * _norm01(merged["turnover_share_pct"], method) +
             0.20 * _norm01(merged["turnover"], method) +
             0.20 * _norm01(pd.to_numeric(main_inflow, errors="coerce"), method) +
             0.10 * _norm01(pd.to_numeric(north_inflow, errors="coerce"), method)
         ).clip(0, 1)
+        capital_ratio = pd.Series(
+            np.where(has_flow, blended_ratio, capital_ratio), index=merged.index
+        )
         capital_score = (capital_ratio * ws["capital"]).clip(0, ws["capital"])
 
     if fund_data:
@@ -257,7 +264,6 @@ def build_cpo_full_factor_stock_score_df(cpo_data: dict, tech_df: pd.DataFrame,
     risk_penalty += np.where(atr > 8, -8, np.where(atr > 6, -5, np.where(atr > 4.5, -2, 0)))
     risk_penalty += np.where(gap > 14, -8, np.where(gap > 10, -5, np.where(gap > 7, -2, 0)))
     risk_penalty += np.where(sig.str.contains("RSI超买") & sig.str.contains("近上轨"), -6, 0)
-    risk_penalty = risk_penalty.clip(-risk_cap, 0)
 
     customer_risk_flag = pd.Series(False, index=merged.index)
     for idx, code in merged["code"].astype(str).items():
@@ -299,6 +305,7 @@ def build_cpo_full_factor_stock_score_df(cpo_data: dict, tech_df: pd.DataFrame,
         (merged["macd_mom"].fillna(0) > 0) &
         (merged["trend"].isin(["多头", "偏多"]))
     )
+    merged["customer_risk_flag_full"] = customer_risk_flag
     merged["risk_flag_full"] = (
         (merged["atr_pct"].fillna(0) > 6) |
         (merged["stop_loss_gap_pct"].fillna(0) > 10) |
@@ -310,6 +317,8 @@ def build_cpo_full_factor_stock_score_df(cpo_data: dict, tech_df: pd.DataFrame,
         merged["entry_flag_full"] = False
     merged["rank_full"] = merged["full_factor_score"].rank(ascending=False, method="first").astype(int)
     merged["style_full"] = fcfg["style"]
+    # conviction from tech_df (score_cpo_stock_breakdown) is the starting signal;
+    # fall back to full_factor_score if the upstream scorer didn't produce it.
     if "conviction" in merged.columns:
         base_conviction = pd.to_numeric(merged["conviction"], errors="coerce").fillna(
             merged["full_factor_score"] / 100.0
@@ -354,7 +363,11 @@ def build_cpo_full_factor_portfolio_plan(
 
     df = stock_score_df.copy()
     entry_col = "entry_flag_full" if "entry_flag_full" in df.columns else "entry_flag"
-    candidates = df[df[entry_col]] if entry_col in df.columns else df
+    if entry_col in df.columns:
+        candidates = df[df[entry_col]]
+    else:
+        _log.warning("build_cpo_full_factor_portfolio_plan: no entry flag column found, using all stocks")
+        candidates = df
     if candidates.empty:
         candidates = df
 
